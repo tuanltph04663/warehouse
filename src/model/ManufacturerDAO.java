@@ -1,9 +1,6 @@
 package model;
 
-import java.io.Serializable;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,12 +67,6 @@ public class ManufacturerDAO extends DAO<Manufacturer> {
 		return null;
 	}
 
-	@Override
-	public List<Manufacturer> findBy(Serializable by) {
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
-	
 	private List<Manufacturer> data() {
 		List<Manufacturer> manufacturers = new ArrayList<>();
 		manufacturers.add(new Manufacturer(1, "m1"));

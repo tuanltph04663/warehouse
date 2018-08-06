@@ -1,6 +1,5 @@
 package model;
 
-import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,6 +13,8 @@ public class ProductDAO extends DAO<Product> {
 	private static final String SELECT_ALL = "SELECT * FROM PRODUCT";
 
 	private static final String INSERT_INTO = "INSERT INTO PRODUCT VALUES(?,?,?,?,?,?,?,?)";
+	
+	private static final String UPDATE = "";
 
 	public boolean insert(Product entity) {
 		int id = entity.getId();
@@ -82,15 +83,6 @@ public class ProductDAO extends DAO<Product> {
 				return p;
 			}
 		}
-		return null;
-	}
-
-	/**
-	 * find Product by Warehouse
-	 */
-	@Override
-	public List<Product> findBy(Serializable by) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

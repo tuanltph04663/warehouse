@@ -1,9 +1,6 @@
 package model;
 
-import java.io.Serializable;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,12 +66,6 @@ public class CategoryDAO extends DAO<Category> {
 				return c;
 			}
 		}
-		return null;
-	}
-
-	@Override
-	public List<Category> findBy(Serializable by) {
-		// TODO findBy Category
 		return null;
 	}
 
