@@ -1,10 +1,12 @@
-package model;
+package model.dao;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import model.entity.Warehouse;
 
 public class WarehouseDAO extends DAO<Warehouse> {
 

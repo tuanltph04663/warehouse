@@ -1,4 +1,4 @@
-package model;
+package model.dao;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import model.entity.Product;
 
 public class ProductDAO extends DAO<Product> {
 

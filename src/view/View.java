@@ -30,14 +30,14 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
-import model.Category;
-import model.CategoryDAO;
-import model.Manufacturer;
-import model.ManufacturerDAO;
-import model.Product;
-import model.ProductDAO;
-import model.Warehouse;
-import model.WarehouseDAO;
+import model.dao.CategoryDAO;
+import model.dao.ManufacturerDAO;
+import model.dao.ProductDAO;
+import model.dao.WarehouseDAO;
+import model.entity.Category;
+import model.entity.Manufacturer;
+import model.entity.Product;
+import model.entity.Warehouse;
 import util.Convert;
 
 public class View extends JFrame {
@@ -157,7 +157,7 @@ public class View extends JFrame {
 		toggleForm(false);
 
 		// Start program: default warehouse selected = 1;
-		fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+		fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
 
 		pack();
 	}
@@ -271,7 +271,7 @@ public class View extends JFrame {
 					for (Product product : products) {
 						System.out.println(product);
 					}
-					fillToProductTable(products);
+					fillProductsToTable(products);
 				}
 
 			}
@@ -294,7 +294,7 @@ public class View extends JFrame {
 					productDAOInit.delete(productToDelete);
 
 					// reload table
-					fillToProductTable(products);
+					fillProductsToTable(products);
 				}
 			}
 		});
@@ -317,6 +317,8 @@ public class View extends JFrame {
 				Product productToSave = formToProduct();
 				System.out.println("In btnSave, productToSave: " + productToSave);
 
+				// TODO: save confirm
+				
 				// insert product
 				boolean isInserted = productDAOInit.insert(productToSave);
 
@@ -330,7 +332,7 @@ public class View extends JFrame {
 					}
 
 					// reload table
-					fillToProductTable(products);
+					fillProductsToTable(products);
 
 					// show dialog
 					JOptionPane.showMessageDialog(null, "Insert successfully!");
@@ -408,7 +410,7 @@ public class View extends JFrame {
 				System.out.println("In warehouse combobox, selected warehouse id: " + selectedWarehouse);
 
 				// fill to table
-				fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+				fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
 			}
 		});
 
@@ -438,13 +440,12 @@ public class View extends JFrame {
 		btnSearch.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnTim
 				String search = txtSearch.getText();
 				if (search.equals("")) {
-
+					// TODO: fill all product
 				}
 
-				// fillToTable(productDAOInit.findBy(productsInit, search));
+				// TODO: fill product by search
 			}
 		});
 
@@ -614,7 +615,7 @@ public class View extends JFrame {
 		p.add(c, gc);
 	}
 
-	private void fillToProductTable(List<Product> list) {
+	private void fillProductsToTable(List<Product> list) {
 		DefaultTableModel model = (DefaultTableModel) tblProduct.getModel();
 		model.setRowCount(0);
 		for (Product p : list) {
@@ -634,7 +635,6 @@ public class View extends JFrame {
 		txtExpiryDate.setText(p.getExpiryDate().toString());
 		txtAmount.setText(String.valueOf(p.getAmount()));
 
-		System.out.println(p);
 		// TODO set 3 combobox
 		cboCategory.setSelectedIndex(p.getCategoryId() - 1);
 		cboManufacturer.setSelectedIndex(p.getManufacturerId() - 1);
@@ -647,7 +647,7 @@ public class View extends JFrame {
 
 		selectedWarehouse = selectedRow + 1;
 		System.out.println("In warehouse table, selected warehouse id: " + selectedWarehouse);
-		fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+		fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
 	}
 	
 	private void tblProductMouseClicked(MouseEvent evt) {
