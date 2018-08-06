@@ -5,19 +5,12 @@ import java.util.Date;
 public class Product {
 
 	private int id;
-
 	private String name;
-
 	private int price;
-
 	private Date expiryDate;
-
 	private int amount;
-
 	private int categoryId;
-
 	private int manufacturerId;
-
 	private int warehouseId;
 
 	public Product() {

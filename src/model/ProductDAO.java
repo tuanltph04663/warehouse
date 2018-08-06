@@ -2,10 +2,9 @@ package model;
 
 import java.io.Serializable;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,29 +48,31 @@ public class ProductDAO extends DAO<Product> {
 
 	@Override
 	public List<Product> getAll() throws SQLException {
-		List<Product> products = new ArrayList<>();
-		try {
-			Statement s = CONN.createStatement();
-			ResultSet r = s.executeQuery(SELECT_ALL);
-			while (r.next()) {
-				int id = r.getInt("ID");
-				String name = r.getString("NAME");
-				int price = r.getInt("PRICE");
-				Date expiryDate = r.getDate("EXPIRY_DATE");
-				int amount = r.getInt("AMOUNT");
-				int categoryId = r.getInt("CATEGORY_ID");
-				int manufacturerId = r.getInt("MANUFACTURER_ID");
-				int warehouseId = r.getInt("WAREHOUSE_ID");
-				Product product = new Product(id, name, price, expiryDate, amount, categoryId, manufacturerId,
-						warehouseId);
-				products.add(product);
-			}
-			r.close();
-			s.close();
-		} catch (SQLException e) {
-			System.out.println("Can't get data in PRODUCT.");
-		}
-		return products;
+//		List<Product> products = new ArrayList<>();
+//		try {
+//			Statement s = CONN.createStatement();
+//			ResultSet r = s.executeQuery(SELECT_ALL);
+//			while (r.next()) {
+//				int id = r.getInt("ID");
+//				String name = r.getString("NAME");
+//				int price = r.getInt("PRICE");
+//				Date expiryDate = r.getDate("EXPIRY_DATE");
+//				int amount = r.getInt("AMOUNT");
+//				int categoryId = r.getInt("CATEGORY_ID");
+//				int manufacturerId = r.getInt("MANUFACTURER_ID");
+//				int warehouseId = r.getInt("WAREHOUSE_ID");
+//				Product product = new Product(id, name, price, expiryDate, amount, categoryId, manufacturerId,
+//						warehouseId);
+//				products.add(product);
+//			}
+//			r.close();
+//			s.close();
+//		} catch (SQLException e) {
+//			System.out.println("Can't get data in PRODUCT.");
+//		}
+//		return products;
+		
+		return this.data();
 	}
 
 	public Product find(List<Product> products, int id) {
@@ -95,34 +96,61 @@ public class ProductDAO extends DAO<Product> {
 	public List<Product> findBy(List<Product> products, String code) {
 		List<Product> searched = new ArrayList<>();
 		for (Product p : products) {
-			if (code.equals(p.getCode().trim()) || code.equals(p.getName())) {
-				searched.add(p);
-			}
+//			if (code.equals(p.getCode().trim()) || code.equals(p.getName())) {
+//				searched.add(p);
+//			}
 		}
 		return searched;
 	}
 
-	public List<Product> filterProductByWarehouse(List<Product> productsToFilter, String w) {
+	public List<Product> filterProductByWarehouse(List<Product> productsToFilter, int w) {
 		List<Product> filtered = new ArrayList<>();
 
 		for (Product p : productsToFilter) {
-			if (w.equals(p.getKho())) {
+			if (w == p.getWarehouseId()) {
 				filtered.add(p);
 			}
 		}
+		
 		return filtered;
 	}
 
-	@Override
-	public void update(Product entity) {
-		// TODO Auto-generated method stub
-
+	private List<Product> data() {
+		List<Product> products = new ArrayList<>();
+		products.add(new Product(1, "p1", 200, new Date(), 50, 1, 1, 5));
+		products.add(new Product(2, "p2", 200, new Date(), 50, 1, 1, 4));
+		products.add(new Product(3, "p3", 200, new Date(), 50, 1, 1, 4));
+		products.add(new Product(4, "p4", 200, new Date(), 50, 2, 1, 3));
+		products.add(new Product(5, "p5", 200, new Date(), 50, 2, 1, 3));
+		products.add(new Product(6, "p6", 200, new Date(), 50, 3, 1, 3));
+		products.add(new Product(7, "p7", 200, new Date(), 50, 3, 1, 2));
+		products.add(new Product(8, "p8", 200, new Date(), 50, 3, 1, 2));
+		products.add(new Product(9, "p9", 200, new Date(), 50, 4, 1, 1));
+		products.add(new Product(10, "p10", 200, new Date(), 50, 4, 1, 1));
+		products.add(new Product(11, "p11", 200, new Date(), 50, 5, 1, 1));
+		
+		return products;
 	}
 
 	@Override
-	public Product find(Serializable id) {
-		// TODO Auto-generated method stub
+	public Product findByName(List<Product> entities, String name) {
+		for (Product p : entities) {
+			if (name.trim().equals(p.getName().trim())) {
+				return p;
+			}
+		}
 		return null;
 	}
 
+	@Override
+	public Product findById(List<Product> entities, int id) {
+		for (Product p : entities) {
+			if (id == p.getId()) {
+				return p;
+			}
+		}
+		return null;
+	}
+
+	
 }

@@ -13,9 +13,9 @@ public abstract class DAO<Entity> {
 
 	abstract public List<Entity> getAll() throws SQLException;
 
-	abstract public void update(Entity entity);
+	abstract public Entity findByName(List<Entity> entities,String name);
 
-	abstract public Entity find(Serializable id);
+	abstract public Entity findById(List<Entity> entities,int id);
 
 	abstract public List<Entity> findBy(Serializable by);
 

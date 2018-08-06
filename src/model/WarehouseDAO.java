@@ -15,22 +15,24 @@ public class WarehouseDAO extends DAO<Warehouse> {
 
 	@Override
 	public List<Warehouse> getAll() throws SQLException {
-		List<Warehouse> warehouses = new ArrayList<>();
-		try {
-			Statement s = CONN.createStatement();
-			ResultSet r = s.executeQuery(SELECT_ALL);
+		// List<Warehouse> warehouses = new ArrayList<>();
+		// try {
+		// Statement s = CONN.createStatement();
+		// ResultSet r = s.executeQuery(SELECT_ALL);
+		//
+		// while (r.next()) {
+		// Warehouse w = new Warehouse(r.getInt("ID"), r.getString("NAME"));
+		// warehouses.add(w);
+		// }
+		//
+		// r.close();
+		// s.close();
+		// } catch (SQLException e) {
+		// System.out.println("Can't get data in WAREHOUSE");
+		// }
+		// return warehouses;
 
-			while (r.next()) {
-				Warehouse w = new Warehouse(r.getInt("ID"), r.getString("NAME"));
-				warehouses.add(w);
-			}
-
-			r.close();
-			s.close();
-		} catch (SQLException e) {
-			System.out.println("Can't get data in WAREHOUSE");
-		}
-		return warehouses;
+		return this.data();
 	}
 
 	public String[] getWarehouseName() {
@@ -95,18 +97,6 @@ public class WarehouseDAO extends DAO<Warehouse> {
 		return data;
 	}
 
-	@Override
-	public void update(Warehouse entity) {
-		// TODO update Warehouse
-
-	}
-
-	@Override
-	public Warehouse find(Serializable id) {
-		// TODO find Warehouse
-		return null;
-	}
-
 	public Warehouse find(List<Warehouse> warehouses, String name) {
 		for (Warehouse w : warehouses) {
 			if (name.trim().equals(w.getName().trim().trim())) {
@@ -136,4 +126,35 @@ public class WarehouseDAO extends DAO<Warehouse> {
 
 	}
 
+	private List<Warehouse> data() {
+		List<Warehouse> warehouses = new ArrayList<>();
+		warehouses.add(new Warehouse(1, "w1"));
+		warehouses.add(new Warehouse(2, "w2"));
+		warehouses.add(new Warehouse(3, "w3"));
+		warehouses.add(new Warehouse(4, "w4"));
+		warehouses.add(new Warehouse(5, "w5"));
+		warehouses.add(new Warehouse(6, "w6"));
+
+		return warehouses;
+	}
+
+	@Override
+	public Warehouse findByName(List<Warehouse> entities, String name) {
+		for (Warehouse w : entities) {
+			if (name.trim().equals(w.getName().trim())) {
+				return w;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Warehouse findById(List<Warehouse> entities, int id) {
+		for (Warehouse w : entities) {
+			if (id == w.getId()) {
+				return w;
+			}
+		}
+		return null;
+	}
 }

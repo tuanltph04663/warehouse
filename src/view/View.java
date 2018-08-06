@@ -8,8 +8,14 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -32,6 +38,7 @@ import model.Product;
 import model.ProductDAO;
 import model.Warehouse;
 import model.WarehouseDAO;
+import util.Convert;
 
 public class View extends JFrame {
 
@@ -41,6 +48,7 @@ public class View extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	private static final String APPLICATION_TITLE = "Warehouse management";
+
 	private static final String BUTTON_SKIP = "Skip";
 	private static final String BUTTON_EXPORT = "Export";
 	private static final String BUTTON_EDIT = "Edit";
@@ -50,14 +58,15 @@ public class View extends JFrame {
 	private static final String BUTTON_SAVE = "Save";
 
 	private static final String LABEL_PRICE = "Price";
-	private static final String LABEL_EXPIRY_DATE = "Expiry date";
+	private static final String LABEL_EXPIRY_DATE = "Expiry date (DD-MM-YYYY)";
 	private static final String LABEL_MANUFACTURER = "Manufacturer";
 	private static final String LABEL_WAREHOUSE = "Warehouse";
 	private static final String LABEL_PRODUCT_ID = "Product ID";
 	private static final String LABEL_CATEGORY = "Category";
 	private static final String LABEL_AMOUNT = "Amount";
 	private static final String LABEL_PRODUCT_NAME = "Product name";
-	
+	private static final String LABEL_SEARCH = "Search";
+
 	// JPanel
 	private JPanel pnlLeft;
 	private JPanel pnlContent;
@@ -78,9 +87,9 @@ public class View extends JFrame {
 	private JTextField txtSearch;
 
 	// JComboBox
-	private JComboBox<?> cboWarehouse;
-	private JComboBox<?> cboCategory;
-	private JComboBox<?> cboManufacturer;
+	private JComboBox<Warehouse> cboWarehouse;
+	private JComboBox<Category> cboCategory;
+	private JComboBox<Manufacturer> cboManufacturer;
 
 	// JLabel
 	private JLabel lblWarehouse;
@@ -117,7 +126,7 @@ public class View extends JFrame {
 	private List<Category> categories = new ArrayList<>();
 	private List<Manufacturer> manufacturers = new ArrayList<>();
 	private List<Warehouse> warehouses = new ArrayList<>();
-	// private List<Product> productsInit = productDAOInit.getList();
+	private List<Product> products = new ArrayList<>();
 
 	// Application state
 	private int selectedWarehouse = 1;
@@ -132,11 +141,17 @@ public class View extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(false);
 
-		// Call to get init data
-		// getWarehouse();
-		// getProducts();
+		// call to init data
+		getCategories();
+		getManufacturers();
+		getWarehouses();
+		getProducts();
 
+		// add left panel
 		leftPanel();
+		add(pnlLeft, BorderLayout.WEST);
+
+		// add content panel
 		contentPanel();
 		add(pnlContent, BorderLayout.CENTER);
 
@@ -144,21 +159,21 @@ public class View extends JFrame {
 		toggleForm(false);
 
 		// Start program: default warehouse selected = 1;
-		// fillToTable(productDAOInit.filterProductByWarehouse(productsInit,
-		// String.valueOf(selectedWarehouse)));
+		fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+
 		pack();
 	}
 
 	private void leftPanel() {
+		pnlLeft = new JPanel();
+
 		String column[] = { "No.", "Warehouse" };
 
 		// TODO: tblWarehouse data
-		String data[][] = { {}, {} };
-
-		pnlLeft = new JPanel();
-		add(pnlLeft, BorderLayout.WEST);
+		String data[][] = warehouseDAOInit.getWarehouseData();
 
 		tblWarehouse = new JTable(new DefaultTableModel(data, column));
+		tblWarehouse.setRowSelectionInterval(0, 0);
 
 		JScrollPane spTonKho = new JScrollPane(tblWarehouse, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -167,11 +182,11 @@ public class View extends JFrame {
 		splitPane.setLeftComponent(pnlLeft);
 		pnlLeft.add(spTonKho);
 
-		// tblWarehouse.addMouseListener(new MouseAdapter() {
-		// public void mouseClicked(MouseEvent evt) {
-		// tblTonKhoMouseClicked(evt);
-		// }
-		// });
+		tblWarehouse.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				tblWarehouseMouseClicked(evt);
+			}
+		});
 	}
 
 	private void contentPanel() {
@@ -205,7 +220,6 @@ public class View extends JFrame {
 		pnlContent_Top.add(btnSave);
 		pnlContent_Top.add(btnSkip);
 
-
 		btnSkip.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -226,8 +240,6 @@ public class View extends JFrame {
 		btnEdit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnSua
-
 				// enable form
 				toggleForm(true);
 
@@ -238,7 +250,7 @@ public class View extends JFrame {
 					JOptionPane.showMessageDialog(null, "Vui long nhap ma hang hoa");
 				} else {
 					// tim kiem hang hoa theo ma lay duoc trong list
-					Product pFound = productDAOInit.find(maHangHoa);
+					// Product pFound = productDAOInit.find(maHangHoa);
 
 					// get text from field
 					String kho = cboWarehouse.getSelectedItem().toString();
@@ -280,7 +292,7 @@ public class View extends JFrame {
 					JOptionPane.showMessageDialog(null, "Vui long nhap ma hang hoa");
 				} else {
 					// tim kiem hang hoa theo ma lay duoc trong list
-					Product pFound = productDAOInit.find(maHangHoa);
+					// Product pFound = productDAOInit.find(maHangHoa);
 
 					// productDAOInit.remove(pFound);
 
@@ -293,60 +305,44 @@ public class View extends JFrame {
 		btnAdd.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnThem
-
 				// enable form
 				toggleForm(true);
 
 				// clear form
-				// clearForm();
-
+				clearForm();
 			}
 		});
-		
 
 		btnSave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnLuu
-				//
-				// // get product from form
-				// Product productToSave = formToProduct();
-				//
-				// // change product
-				// Warehouse w = warehouseDAOInit.find(warehouses, productToSave.getKho());
-				// Manufacturer m = manufacturerDAOInit.find(manufacturers,
-				// productToSave.getHang());
-				// Category c = categoryDAOInit.find(categories, productToSave.getPhanloai());
-				//
-				// // set product
-				// productToSave.setKho(String.valueOf(w.getId()));
-				// productToSave.setHang(String.valueOf(m.getId()));
-				// productToSave.setPhanloai(String.valueOf(c.getId()));
-				//
-				// // insert product
-				// boolean isInserted = productDAOInit.insert(productToSave);
-				//
-				// if (isInserted) {
-				// clearForm();
-				// List<Product> products = new ArrayList<>();
-				// try {
-				// products = productDAOInit.getAll();
-				// } catch (SQLException ex) {
-				// Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
-				// }
-				//
-				// // reload table
-				// fillToTable(products);
-				//
-				// // show dialog
-				// JOptionPane.showMessageDialog(null, "Insert successfully!");
-				// } else {
-				// JOptionPane.showMessageDialog(null, "Insert fail!");
-				// }
+				// get product from form
+				Product productToSave = formToProduct();
+				System.out.println("In btnSave, productToSave: " + productToSave);
+
+				// insert product
+				boolean isInserted = productDAOInit.insert(productToSave);
+
+				if (isInserted) {
+					clearForm();
+					List<Product> products = new ArrayList<>();
+					try {
+						products = productDAOInit.getAll();
+					} catch (SQLException ex) {
+						Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
+					}
+
+					// reload table
+					fillToProductTable(products);
+
+					// show dialog
+					JOptionPane.showMessageDialog(null, "Insert successfully!");
+				} else {
+					JOptionPane.showMessageDialog(null, "Insert fail!");
+				}
 			}
 		});
-	
+
 	}
 
 	private void contentCenterPanel() {
@@ -408,14 +404,17 @@ public class View extends JFrame {
 		cboWarehouse.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				int selectedW = cboWarehouse.getSelectedIndex() + 1;
+				int selected = cboWarehouse.getSelectedIndex();
+				System.out.println("In warehouse combobox, selected item: " + selected);
+
+				selectedWarehouse = selected + 1;
+				System.out.println("In warehouse combobox, selected warehouse id: " + selectedWarehouse);
 
 				// fill to table
-				// fillToTable(productDAOInit.filterProductByWarehouse(productsInit,
-				// String.valueOf(selectedW)));
+				fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
 			}
 		});
-		
+
 	}
 
 	private void contentCenterBottomPanel() {
@@ -423,22 +422,22 @@ public class View extends JFrame {
 
 		contentCenterBottomSearch();
 		pnlContent_Center_Bottom.add(pnlContent_Center_Bottom_Search, BorderLayout.WEST);
-		
+
 		contentCenterBottomExport();
 		pnlContent_Center_Bottom.add(pnlContent_Center_Bottom_Export, BorderLayout.CENTER);
 	}
 
 	private void contentCenterBottomSearch() {
 		pnlContent_Center_Bottom_Search = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		
+
 		txtSearch = new JTextField(10);
-		lblSearch = new JLabel("Tìm kiếm", JLabel.LEFT);
+		lblSearch = new JLabel(LABEL_SEARCH, JLabel.LEFT);
 		btnSearch = new JButton(BUTTON_SEARCH);
-		
+
 		pnlContent_Center_Bottom_Search.add(lblSearch);
 		pnlContent_Center_Bottom_Search.add(txtSearch);
 		pnlContent_Center_Bottom_Search.add(btnSearch);
-		
+
 		btnSearch.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -453,14 +452,12 @@ public class View extends JFrame {
 		});
 
 	}
-	
 
 	private void contentCenterBottomExport() {
 		pnlContent_Center_Bottom_Export = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		
+
 		btnExport = new JButton(BUTTON_EXPORT);
 		pnlContent_Center_Bottom_Export.add(btnExport);
-		
 
 		btnExport.addActionListener(new ActionListener() {
 			@Override
@@ -470,24 +467,24 @@ public class View extends JFrame {
 			}
 		});
 	}
-	
+
 	private void contentBottomPanel() {
 		pnlContent_Bottom = new JPanel();
 
 		String data[][] = { { "", "", "", "" }, { "", "", "", "" }, { "", "", "", "" }, { "", "", "", "" } };
-
 		String column[] = { LABEL_PRODUCT_ID, LABEL_PRODUCT_NAME, LABEL_EXPIRY_DATE, LABEL_AMOUNT };
+
 		tblProduct = new JTable(new DefaultTableModel(data, column));
 		tblProduct.setSize(600, 300);
+
 		JScrollPane spKetXuat = new JScrollPane(tblProduct, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-
 		spKetXuat.setPreferredSize(new Dimension(600, 300));
-		pnlContent_Bottom.add(spKetXuat);
 
+		pnlContent_Bottom.add(spKetXuat);
 		getContentPane().add(splitPane);
 		splitPane.setRightComponent(pnlContent);
-		
+
 		// tblProduct.addMouseListener(new MouseAdapter() {
 		// public void mouseClicked(MouseEvent evt) {
 		// tblKetXuatMouseClicked(evt);
@@ -495,36 +492,91 @@ public class View extends JFrame {
 		// });
 	}
 
-	// private void getProducts() {
-	// try {
-	// productsInit = productDAOInit.getAll();
-	// } catch (SQLException ex) {
-	// Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
-	// }
-	// }
+	private void getCategories() {
+		try {
+			categories = categoryDAOInit.getAll();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getManufacturers() {
+		try {
+			manufacturers = manufacturerDAOInit.getAll();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getWarehouses() {
+		try {
+			warehouses = warehouseDAOInit.getAll();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void getProducts() {
+		try {
+			products = productDAOInit.getAll();
+		} catch (SQLException ex) {
+			Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
 
 	private Product formToProduct() {
 		// get text from field
-		String maHangHoa = txtProductId.getText();
-		String kho = cboWarehouse.getSelectedItem().toString();
-		String phanLoai = cboCategory.getSelectedItem().toString();
-		String ten = txtProductName.getText();
-		String hang = cboManufacturer.getSelectedItem().toString();
-		String han = txtExpiryDate.getText();
-		String gia = txtPrice.getText();
-		String soLuong = txtAmount.getText();
+
+		String fProductId = txtProductId.getText();
+		String fProductName = txtProductName.getText();
+		String fPrice = txtPrice.getText();
+		String fExpiryDate = txtExpiryDate.getText();
+		String fAmount = txtAmount.getText();
+
+		String fCategoryId = cboCategory.getSelectedItem().toString();
+		String fManufacturer = cboManufacturer.getSelectedItem().toString();
+		String fWarehouseId = cboWarehouse.getSelectedItem().toString();
+
+		System.out.println("fProductId: " + fProductId);
+		System.out.println("fProductName: " + fProductName);
+		System.out.println("fPrice: " + fPrice);
+		System.out.println("fExpiryDate: " + fExpiryDate);
+		System.out.println("fAmount: " + fAmount);
+		System.out.println("fCategoryId: " + fCategoryId);
+		System.out.println("fManufacturer: " + fManufacturer);
+		System.out.println("fWarehouseId: " + fWarehouseId);
+
+		int productId = Integer.parseInt(fProductId);
+		String productName = fProductName;
+		int price = Integer.parseInt(fPrice);
+
+		// TODO convert string to date
+		Date expiryDate = Convert.stringToDate(txtExpiryDate.getText());
+		int amount = Integer.parseInt(txtAmount.getText());
+		int categoryId = categoryDAOInit.findByName(categories, fCategoryId).getId();
+		int manufacturerId = manufacturerDAOInit.findByName(manufacturers, fManufacturer).getId();
+		int warehouseId = warehouseDAOInit.findByName(warehouses, fWarehouseId).getId();
+
+		System.out.println("productId: " + productId);
+		System.out.println("productName: " + productName);
+		System.out.println("price: " + price);
+		System.out.println("expiryDate: " + expiryDate);
+		System.out.println("amount: " + amount);
+		System.out.println("categoryId: " + categoryId);
+		System.out.println("manufacturer: " + manufacturerId);
+		System.out.println("warehouseId: " + warehouseId);
 
 		// TODO validate data
 
 		Product p = new Product();
-		// p.setCode(maHangHoa);
-		// p.setKho(kho);
-		// p.setPhanloai(phanLoai);
-		// p.setName(ten);
-		// p.setHang(hang);
-		// p.setExpiryDate(han);
-		// p.setPrice(gia);
-		// p.setTonKho(soLuong);
+		p.setId(productId);
+		p.setName(productName);
+		p.setPrice(price);
+		p.setExpiryDate(expiryDate);
+		p.setAmount(amount);
+		p.setCategoryId(categoryId);
+		p.setManufacturerId(manufacturerId);
+		p.setWarehouseId(warehouseId);
 
 		return p;
 	}
@@ -543,11 +595,13 @@ public class View extends JFrame {
 		cboWarehouse.setEnabled(isEnable);
 	}
 
-	// private void tblTonKhoMouseClicked(MouseEvent evt) {
-	// int selectedRow = tblWarehouse.getSelectedRow();
-	// String category = (String) tblWarehouse.getValueAt(selectedRow, 0);
-	// fillToTable(productDAOInit.filterProductByWarehouse(productsInit, category));
-	// }
+	private void clearForm() {
+		txtAmount.setText("");
+		txtExpiryDate.setText("");
+		txtPrice.setText("");
+		txtProductId.setText("");
+		txtProductName.setText("");
+	}
 
 	// private void tblKetXuatMouseClicked(MouseEvent evt) {
 	//
@@ -561,14 +615,6 @@ public class View extends JFrame {
 	// System.out.println(p);
 	// // Fill product to form
 	// filProductToForm(p);
-	// }
-
-	// private void clearForm() {
-	// txtPrice.setText("");
-	// txtExpiryDate.setText("");
-	// txtProductId.setText("");
-	// txtAmount.setText("");
-	// txtProductName.setText("");
 	// }
 
 	// private void filProductToForm(Product p) {
@@ -598,14 +644,27 @@ public class View extends JFrame {
 		p.add(c, gc);
 	}
 
-	// private void fillToTable(List<Product> list) {
-	// DefaultTableModel model = (DefaultTableModel) tblProduct.getModel();
-	// model.setRowCount(0);
-	// for (Product p : list) {
-	// Object[] row = new Object[] { p.getCode(), p.getName(), p.getExpiryDate(),
-	// p.getTonKho() };
-	// model.addRow(row);
-	// }
-	// }
+	private void fillToProductTable(List<Product> list) {
+		DefaultTableModel model = (DefaultTableModel) tblProduct.getModel();
+		model.setRowCount(0);
+		for (Product p : list) {
+			Object[] row = new Object[] { p.getId(), p.getName(), p.getExpiryDate(), p.getAmount() };
+			model.addRow(row);
+		}
 
+		if (list.size() > 0) {
+			tblProduct.setRowSelectionInterval(0, 0);
+		}
+	}
+
+	private void tblWarehouseMouseClicked(MouseEvent evt) {
+		System.out.println(evt);
+
+		int selectedRow = tblWarehouse.getSelectedRow();
+		System.out.println("In warehouse table, selected row: " + selectedRow);
+
+		selectedWarehouse = selectedRow + 1;
+		System.out.println("In warehouse table, selected warehouse id: " + selectedWarehouse);
+		fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+	}
 }
