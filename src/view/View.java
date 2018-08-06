@@ -30,6 +30,10 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import com.aspose.cells.Workbook;
+import com.aspose.cells.WorkbookDesigner;
+import com.aspose.cells.Worksheet;
+
 import model.dao.CategoryDAO;
 import model.dao.ManufacturerDAO;
 import model.dao.ProductDAO;
@@ -37,6 +41,7 @@ import model.dao.WarehouseDAO;
 import model.entity.Category;
 import model.entity.Manufacturer;
 import model.entity.Product;
+import model.entity.ProductToExport;
 import model.entity.Warehouse;
 import util.Convert;
 
@@ -130,6 +135,11 @@ public class View extends JFrame {
 
 	// Application state
 	private int selectedWarehouse = 1;
+	Status applicationStatus;
+
+	private enum Status {
+		ADDING, EDITING, DEFAULT;
+	}
 
 	public View() {
 		setLayout(new BorderLayout());
@@ -155,6 +165,9 @@ public class View extends JFrame {
 
 		// disable form
 		toggleForm(false);
+
+		// application status
+		applicationStatus = Status.DEFAULT;
 
 		// Start program: default warehouse selected = 1;
 		fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
@@ -221,6 +234,9 @@ public class View extends JFrame {
 		btnSkip.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// change status
+				applicationStatus = Status.DEFAULT;
+
 				toggleForm(false);
 			}
 		});
@@ -228,52 +244,14 @@ public class View extends JFrame {
 		btnEdit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// change status
+				applicationStatus = Status.EDITING;
+
 				// enable form
 				toggleForm(true);
 
-				// get text from ma hang hoa field
-				String fProductId = txtProductId.getText();
-
-				if (fProductId.equals("")) {
-					JOptionPane.showMessageDialog(null, "Please insert product id.");
-				} else {
-					// get text from field
-					String fProductName = txtProductName.getText();
-					String fExpiryDate = txtExpiryDate.getText();
-					String fPrice = txtPrice.getText();
-					String fAmount = txtAmount.getText();
-					String fCategoryId = cboCategory.getSelectedItem().toString();
-					String fManufacturerId = cboManufacturer.getSelectedItem().toString();
-					String fWarehouseId = cboWarehouse.getSelectedItem().toString();
-
-					int productId = Integer.parseInt(fProductId);
-					String productName = fProductName;
-					Date expiryDate = Convert.stringToDate(fExpiryDate);
-					int price = Integer.parseInt(fPrice);
-					int amount = Integer.parseInt(fAmount);
-					int categoryId = Integer.parseInt(fCategoryId);
-					int manufacturerId = Integer.parseInt(fManufacturerId);
-					int warehouseId = Integer.parseInt(fWarehouseId);
-
-					// find product by id
-					Product productToUpdate = productDAOInit.findById(products, productId);
-
-					productToUpdate.setName(productName);
-					productToUpdate.setExpiryDate(expiryDate);
-					productToUpdate.setPrice(price);
-					productToUpdate.setAmount(amount);
-					productToUpdate.setCategoryId(categoryId);
-					productToUpdate.setManufacturerId(manufacturerId);
-					productToUpdate.setWarehouseId(warehouseId);
-
-					productDAOInit.update(productToUpdate);
-
-					for (Product product : products) {
-						System.out.println(product);
-					}
-					fillProductsToTable(products);
-				}
-
+				// disable product id
+				txtProductId.setEnabled(false);
 			}
 		});
 
@@ -285,16 +263,26 @@ public class View extends JFrame {
 				String fProductId = txtProductId.getText();
 
 				if (fProductId.equals("")) {
-					JOptionPane.showMessageDialog(null, "Please insert product id.");
+					JOptionPane.showMessageDialog(null, "Please select product to delete.");
 				} else {
 					int productId = Integer.parseInt(fProductId);
 
 					Product productToDelete = productDAOInit.findById(products, productId);
 
-					productDAOInit.delete(productToDelete);
+					boolean isDeleted = productDAOInit.delete(productToDelete);
 
-					// reload table
-					fillProductsToTable(products);
+					if (isDeleted) {
+						JOptionPane.showMessageDialog(null, "Deleted!", "Notification", 1);
+
+						// reload database
+						getProducts();
+
+						// reload table
+						fillProductsToTable(products);
+					} else {
+						JOptionPane.showMessageDialog(null, "Delete fail!", "Notification", 1);
+					}
+
 				}
 			}
 		});
@@ -302,6 +290,9 @@ public class View extends JFrame {
 		btnAdd.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// change status
+				applicationStatus = Status.ADDING;
+
 				// enable form
 				toggleForm(true);
 
@@ -313,35 +304,95 @@ public class View extends JFrame {
 		btnSave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// get product from form
-				Product productToSave = formToProduct();
-				System.out.println("In btnSave, productToSave: " + productToSave);
-
-				// TODO: save confirm
-				
-				// insert product
-				boolean isInserted = productDAOInit.insert(productToSave);
-
-				if (isInserted) {
-					clearForm();
-					List<Product> products = new ArrayList<>();
-					try {
-						products = productDAOInit.getAll();
-					} catch (SQLException ex) {
-						Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
-					}
-
-					// reload table
-					fillProductsToTable(products);
-
-					// show dialog
-					JOptionPane.showMessageDialog(null, "Insert successfully!");
-				} else {
-					JOptionPane.showMessageDialog(null, "Insert fail!");
+				if (applicationStatus == Status.ADDING) {
+					saveProduct();
+				} else if (applicationStatus == Status.EDITING) {
+					updateProduct();
 				}
 			}
 		});
 
+	}
+
+	private void saveProduct() {
+		// get product from form
+		Product productToSave = formToProduct();
+		System.out.println("In btnSave, productToSave: " + productToSave);
+
+		// TODO: save confirm
+
+		// insert product
+		boolean isInserted = productDAOInit.insert(productToSave);
+
+		if (isInserted) {
+			clearForm();
+			List<Product> products = new ArrayList<>();
+			try {
+				products = productDAOInit.getAll();
+			} catch (SQLException ex) {
+				Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
+			}
+
+			// reload table
+			fillProductsToTable(products);
+
+			// show dialog
+			JOptionPane.showMessageDialog(null, "Insert successfully!");
+		} else {
+			JOptionPane.showMessageDialog(null, "Insert fail!");
+		}
+	}
+
+	private void updateProduct() {
+		// get text from ma hang hoa field
+		String fProductId = txtProductId.getText();
+
+		if (fProductId.equals("")) {
+			JOptionPane.showMessageDialog(null, "Please insert product id.");
+		} else {
+			// get text from field
+			String fProductName = txtProductName.getText();
+			String fExpiryDate = txtExpiryDate.getText();
+			String fPrice = txtPrice.getText();
+			String fAmount = txtAmount.getText();
+			String fCategoryId = cboCategory.getSelectedItem().toString();
+			String fManufacturerId = cboManufacturer.getSelectedItem().toString();
+			String fWarehouseId = cboWarehouse.getSelectedItem().toString();
+
+			int productId = Integer.parseInt(fProductId);
+			String productName = fProductName;
+			int price = Integer.parseInt(fPrice);
+
+			// TODO convert string to date
+			Date expiryDate = Convert.stringToDate(fExpiryDate);
+			int amount = Integer.parseInt(fAmount);
+			int categoryId = categoryDAOInit.findByName(categories, fCategoryId).getId();
+			int manufacturerId = manufacturerDAOInit.findByName(manufacturers, fManufacturerId).getId();
+			int warehouseId = warehouseDAOInit.findByName(warehouses, fWarehouseId).getId();
+
+			// find product by id
+			Product productToUpdate = productDAOInit.findById(products, productId);
+
+			productToUpdate.setName(productName);
+			productToUpdate.setExpiryDate(expiryDate);
+			productToUpdate.setPrice(price);
+			productToUpdate.setAmount(amount);
+			productToUpdate.setCategoryId(categoryId);
+			productToUpdate.setManufacturerId(manufacturerId);
+			productToUpdate.setWarehouseId(warehouseId);
+
+			boolean isUpdated = productDAOInit.update(productToUpdate);
+			if (isUpdated) {
+				JOptionPane.showMessageDialog(null, "Update successfully!", "Notification", 1);
+				for (Product product : products) {
+					System.out.println(product);
+				}
+				fillProductsToTable(products);
+			} else {
+				JOptionPane.showMessageDialog(null, "Update fail!", "Notification", 1);
+			}
+
+		}
 	}
 
 	private void contentCenterPanel() {
@@ -400,19 +451,24 @@ public class View extends JFrame {
 		addItem(pnlContent_Center_Center, lblAmount, 4, 4, 1, 1, GridBagConstraints.WEST);
 		addItem(pnlContent_Center_Center, txtAmount, 5, 4, 1, 1, GridBagConstraints.EAST);
 
-		cboWarehouse.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				int selected = cboWarehouse.getSelectedIndex();
-				System.out.println("In warehouse combobox, selected item: " + selected);
-
-				selectedWarehouse = selected + 1;
-				System.out.println("In warehouse combobox, selected warehouse id: " + selectedWarehouse);
-
-				// fill to table
-				fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
-			}
-		});
+//		cboWarehouse.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent ae) {
+//				int selected = cboWarehouse.getSelectedIndex();
+//				System.out.println("In warehouse combobox, selected item: " + selected);
+//
+//				selectedWarehouse = selected + 1;
+//				System.out.println("In warehouse combobox, selected warehouse id: " + selectedWarehouse);
+//
+//				// fill to table
+//				fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+//
+//				if (rootPaneCheckingEnabled) {
+//
+//				}
+//				
+//			}
+//		});
 
 	}
 
@@ -443,9 +499,18 @@ public class View extends JFrame {
 				String search = txtSearch.getText();
 				if (search.equals("")) {
 					// TODO: fill all product
+					fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
 				}
 
-				// TODO: fill product by search
+				int id;
+				try {
+					id = Integer.parseInt(search);
+					fillProductsToTable(productDAOInit.find(products, id));
+				} catch (Exception e2) {
+					fillProductsToTable(productDAOInit.findBy(products, search));
+					System.out.println(e2);
+				}
+
 			}
 		});
 
@@ -460,8 +525,7 @@ public class View extends JFrame {
 		btnExport.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnKetXuat
-				System.out.println("btnKetXuat");
+				exportData();
 			}
 		});
 	}
@@ -524,7 +588,6 @@ public class View extends JFrame {
 
 	private Product formToProduct() {
 		// get text from field
-
 		String fProductId = txtProductId.getText();
 		String fProductName = txtProductName.getText();
 		String fPrice = txtPrice.getText();
@@ -532,40 +595,21 @@ public class View extends JFrame {
 		String fAmount = txtAmount.getText();
 
 		String fCategoryId = cboCategory.getSelectedItem().toString();
-		String fManufacturer = cboManufacturer.getSelectedItem().toString();
+		String fManufacturerId = cboManufacturer.getSelectedItem().toString();
 		String fWarehouseId = cboWarehouse.getSelectedItem().toString();
-
-		System.out.println("fProductId: " + fProductId);
-		System.out.println("fProductName: " + fProductName);
-		System.out.println("fPrice: " + fPrice);
-		System.out.println("fExpiryDate: " + fExpiryDate);
-		System.out.println("fAmount: " + fAmount);
-		System.out.println("fCategoryId: " + fCategoryId);
-		System.out.println("fManufacturer: " + fManufacturer);
-		System.out.println("fWarehouseId: " + fWarehouseId);
 
 		int productId = Integer.parseInt(fProductId);
 		String productName = fProductName;
 		int price = Integer.parseInt(fPrice);
 
 		// TODO convert string to date
-		Date expiryDate = Convert.stringToDate(txtExpiryDate.getText());
-		int amount = Integer.parseInt(txtAmount.getText());
+		Date expiryDate = Convert.stringToDate(fExpiryDate);
+		int amount = Integer.parseInt(fAmount);
 		int categoryId = categoryDAOInit.findByName(categories, fCategoryId).getId();
-		int manufacturerId = manufacturerDAOInit.findByName(manufacturers, fManufacturer).getId();
+		int manufacturerId = manufacturerDAOInit.findByName(manufacturers, fManufacturerId).getId();
 		int warehouseId = warehouseDAOInit.findByName(warehouses, fWarehouseId).getId();
 
-		System.out.println("productId: " + productId);
-		System.out.println("productName: " + productName);
-		System.out.println("price: " + price);
-		System.out.println("expiryDate: " + expiryDate);
-		System.out.println("amount: " + amount);
-		System.out.println("categoryId: " + categoryId);
-		System.out.println("manufacturer: " + manufacturerId);
-		System.out.println("warehouseId: " + warehouseId);
-
 		// TODO validate data
-
 		Product p = new Product();
 		p.setId(productId);
 		p.setName(productName);
@@ -623,9 +667,6 @@ public class View extends JFrame {
 			model.addRow(row);
 		}
 
-		if (list.size() > 0) {
-			tblProduct.setRowSelectionInterval(0, 0);
-		}
 	}
 
 	private void filProductToForm(Product p) {
@@ -647,18 +688,98 @@ public class View extends JFrame {
 
 		selectedWarehouse = selectedRow + 1;
 		System.out.println("In warehouse table, selected warehouse id: " + selectedWarehouse);
-		fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+
+		List<Product> productsFiltered = productDAOInit.filterProductByWarehouse(products, selectedWarehouse);
+
+		fillProductsToTable(productsFiltered);
+
+		if (productsFiltered.size() > 0) {
+			// focus first row
+			tblProduct.setRowSelectionInterval(0, 0);
+		}
 	}
-	
+
 	private void tblProductMouseClicked(MouseEvent evt) {
+
 		int selectedRow = tblProduct.getSelectedRow();
 		System.out.println("In product table, selected row: " + selectedRow);
-		
-		int productId = selectedRow + 1;
-		System.out.println("In product table, selected product id: " + productId);
 
-		Product p = productDAOInit.findById(products, productId);
+		String tProductId = tblProduct.getValueAt(selectedRow, 0).toString();
+
+		int selectedProductId = Integer.parseInt(tProductId);
+
+		Product p = productDAOInit.findById(products, selectedProductId);
+		System.out.println("In product table, product warehouse id: " + p.getWarehouseId());
 
 		filProductToForm(p);
+	}
+	
+	private List<ProductToExport> productsToExport(){
+		List<ProductToExport> productsToExport = new ArrayList<>();
+		
+		for (Product p : products) {
+			String categoryName = categoryDAOInit.findById(categories, p.getCategoryId()).getName();
+			String manufacturerName = manufacturerDAOInit.findById(manufacturers, p.getManufacturerId()).getName();
+			String warehouseName = warehouseDAOInit.findById(warehouses, p.getWarehouseId()).getName();
+			
+			ProductToExport pToExport = new ProductToExport();
+			pToExport.setId(p.getId());
+			pToExport.setName(p.getName());
+			pToExport.setPrice(p.getPrice());
+			pToExport.setExpiryDate(p.getExpiryDate());
+			pToExport.setAmount(p.getAmount());
+			pToExport.setCategory(categoryName);
+			pToExport.setManufacturer(manufacturerName);
+			pToExport.setWarehouse(warehouseName);
+			
+			productsToExport.add(pToExport);
+		}
+		
+		return productsToExport;
+	}
+
+	private void exportData() {
+		// Instantiating a WorkbookDesigner object
+		WorkbookDesigner designer = new WorkbookDesigner();
+
+		// Create empty workbook
+		Workbook wb = new Workbook();
+
+		String[] excelTitle = new String[] { "Id", "Name", "Price", "Expiry date", "Amount", "Category id",
+				"Manuafacturer id", "Warehouse id" };
+
+		// Access first worksheet and add smart marker in cell A1
+		Worksheet ws = wb.getWorksheets().get(0);
+		ws.getCells().get("A1").putValue("&=$Title(horizontal,noadd)");
+		ws.getCells().get("A2").putValue("&=Product.Id");
+		ws.getCells().get("B2").putValue("&=Product.Name");
+		ws.getCells().get("C2").putValue("&=Product.Price");
+		ws.getCells().get("D2").putValue("&=Product.ExpiryDate");
+		ws.getCells().get("E2").putValue("&=Product.Amount");
+		ws.getCells().get("F2").putValue("&=Product.Category");
+		ws.getCells().get("G2").putValue("&=Product.Manufacturer");
+		ws.getCells().get("H2").putValue("&=Product.Warehouse");
+
+		designer.setWorkbook(wb);
+
+		// Set the data source for the designer spreadsheet
+		designer.setDataSource("Title", excelTitle);
+		designer.setDataSource("Product", productsToExport());
+
+		
+		try {
+			// Process
+			designer.process();
+
+			ws.autoFitColumns();
+
+			// Save the workbook
+			wb.save("test.xlsx");
+			
+			JOptionPane.showMessageDialog(null, "Export successfully!");
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Export fail!");
+		}
 	}
 }

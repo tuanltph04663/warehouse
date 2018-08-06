@@ -24,4 +24,9 @@ public class Convert {
 		System.out.println(date.getYear());
 	}
 	
+	
+	public static java.sql.Date utilDateToSqlDate(Date d){
+		java.sql.Date dateConverted = new java.sql.Date(d.getTime());
+		return dateConverted;
+	}
 }

@@ -1,6 +1,8 @@
 package model.dao;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -14,24 +16,24 @@ public class WarehouseDAO extends DAO<Warehouse> {
 
 	@Override
 	public List<Warehouse> getAll() throws SQLException {
-		// List<Warehouse> warehouses = new ArrayList<>();
-		// try {
-		// Statement s = CONN.createStatement();
-		// ResultSet r = s.executeQuery(SELECT_ALL);
-		//
-		// while (r.next()) {
-		// Warehouse w = new Warehouse(r.getInt("ID"), r.getString("NAME"));
-		// warehouses.add(w);
-		// }
-		//
-		// r.close();
-		// s.close();
-		// } catch (SQLException e) {
-		// System.out.println("Can't get data in WAREHOUSE");
-		// }
-		// return warehouses;
+		List<Warehouse> warehouses = new ArrayList<>();
+		try {
+			Statement s = CONN.createStatement();
+			ResultSet r = s.executeQuery(SELECT_ALL);
 
-		return this.data();
+			while (r.next()) {
+				Warehouse w = new Warehouse(r.getInt("ID"), r.getString("NAME"));
+				warehouses.add(w);
+			}
+
+			r.close();
+			s.close();
+		} catch (SQLException e) {
+			System.out.println("Can't get data in WAREHOUSE");
+		}
+		return warehouses;
+
+//		return this.data();
 	}
 
 	public String[] getWarehouseName() {

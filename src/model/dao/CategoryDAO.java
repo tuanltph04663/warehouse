@@ -1,6 +1,8 @@
 package model.dao;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,24 +14,24 @@ public class CategoryDAO extends DAO<Category> {
 
 	@Override
 	public List<Category> getAll() throws SQLException {
-		// List<Category> categories = new ArrayList<>();
-		// try {
-		// Statement s = CONN.createStatement();
-		// ResultSet r = s.executeQuery(SELECT_ALL);
-		//
-		// while (r.next()) {
-		// Category c = new Category(r.getInt("ID"), r.getString("NAME"));
-		// categories.add(c);
-		// }
-		//
-		// r.close();
-		// s.close();
-		// } catch (SQLException e) {
-		// System.out.println("Can't get data in CATEGORY.");
-		// }
-		// return categories;
+		List<Category> categories = new ArrayList<>();
+		try {
+			Statement s = CONN.createStatement();
+			ResultSet r = s.executeQuery(SELECT_ALL);
 
-		return this.data();
+			while (r.next()) {
+				Category c = new Category(r.getInt("ID"), r.getString("NAME"));
+				categories.add(c);
+			}
+
+			r.close();
+			s.close();
+		} catch (SQLException e) {
+			System.out.println("Can't get data in CATEGORY.");
+		}
+		return categories;
+
+//		return this.data();
 	}
 
 	public String[] getCategoryName() {

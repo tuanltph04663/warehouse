@@ -1,6 +1,8 @@
 package model.dao;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,24 +14,24 @@ public class ManufacturerDAO extends DAO<Manufacturer> {
 
 	@Override
 	public List<Manufacturer> getAll() throws SQLException {
-//		List<Manufacturer> manufacturers = new ArrayList<>();
-//		try {
-//			Statement s = CONN.createStatement();
-//			ResultSet r = s.executeQuery(SELECT_ALL);
-//
-//			while (r.next()) {
-//				Manufacturer m = new Manufacturer(r.getInt("ID"), r.getString("NAME"));
-//				manufacturers.add(m);
-//			}
-//
-//			r.close();
-//			s.close();
-//		} catch (SQLException e) {
-//			System.out.println("Can't get data in MANUFACTURER.");
-//		}
-//		return manufacturers;
+		List<Manufacturer> manufacturers = new ArrayList<>();
+		try {
+			Statement s = CONN.createStatement();
+			ResultSet r = s.executeQuery(SELECT_ALL);
+
+			while (r.next()) {
+				Manufacturer m = new Manufacturer(r.getInt("ID"), r.getString("NAME"));
+				manufacturers.add(m);
+			}
+
+			r.close();
+			s.close();
+		} catch (SQLException e) {
+			System.out.println("Can't get data in MANUFACTURER.");
+		}
+		return manufacturers;
 		
-		return this.data();
+//		return this.data();
 	}
 
 	public String[] getManufacturerName() {
