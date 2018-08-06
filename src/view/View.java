@@ -130,8 +130,6 @@ public class View extends JFrame {
 
 	// Application state
 	private int selectedWarehouse = 1;
-	private int selectedCategory = 1;
-	private int selectedManufacturer = 1;
 
 	public View() {
 		setLayout(new BorderLayout());
@@ -223,17 +221,7 @@ public class View extends JFrame {
 		btnSkip.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnBoQua
-				cboWarehouse.setEnabled(false);
-				cboManufacturer.setEnabled(false);
-				cboCategory.setEnabled(false);
-				txtPrice.setEnabled(false);
-				txtExpiryDate.setEnabled(false);
-				txtProductId.setEnabled(false);
-				txtAmount.setEnabled(false);
-				txtProductName.setEnabled(false);
-				txtSearch.setEnabled(false);
-
+				toggleForm(false);
 			}
 		});
 
@@ -244,36 +232,46 @@ public class View extends JFrame {
 				toggleForm(true);
 
 				// get text from ma hang hoa field
-				String maHangHoa = txtProductId.getText();
+				String fProductId = txtProductId.getText();
 
-				if (maHangHoa.equals("")) {
-					JOptionPane.showMessageDialog(null, "Vui long nhap ma hang hoa");
+				if (fProductId.equals("")) {
+					JOptionPane.showMessageDialog(null, "Please insert product id.");
 				} else {
-					// tim kiem hang hoa theo ma lay duoc trong list
-					// Product pFound = productDAOInit.find(maHangHoa);
-
 					// get text from field
-					String kho = cboWarehouse.getSelectedItem().toString();
-					String phanLoai = cboCategory.getSelectedItem().toString();
-					String ten = txtProductName.getText();
-					String hang = cboManufacturer.getSelectedItem().toString();
-					String han = txtExpiryDate.getText();
-					String gia = txtPrice.getText();
-					String soLuong = txtAmount.getText();
+					String fProductName = txtProductName.getText();
+					String fExpiryDate = txtExpiryDate.getText();
+					String fPrice = txtPrice.getText();
+					String fAmount = txtAmount.getText();
+					String fCategoryId = cboCategory.getSelectedItem().toString();
+					String fManufacturerId = cboManufacturer.getSelectedItem().toString();
+					String fWarehouseId = cboWarehouse.getSelectedItem().toString();
 
-					// pFound.setCode(gia);
-					// pFound.setKho(kho);
-					// pFound.setPhanloai(phanLoai);
-					// pFound.setName(ten);
-					// pFound.setHang(hang);
-					// pFound.setExpiryDate(han);
-					// pFound.setPrice(gia);
-					// pFound.setTonKho(soLuong);
-					// productDAOInit.update(pFound);
-					// for (Product product : productsInit) {
-					// System.out.println(product);
-					// }
-					// fillToTable(productsInit);
+					int productId = Integer.parseInt(fProductId);
+					String productName = fProductName;
+					Date expiryDate = Convert.stringToDate(fExpiryDate);
+					int price = Integer.parseInt(fPrice);
+					int amount = Integer.parseInt(fAmount);
+					int categoryId = Integer.parseInt(fCategoryId);
+					int manufacturerId = Integer.parseInt(fManufacturerId);
+					int warehouseId = Integer.parseInt(fWarehouseId);
+
+					// find product by id
+					Product productToUpdate = productDAOInit.findById(products, productId);
+
+					productToUpdate.setName(productName);
+					productToUpdate.setExpiryDate(expiryDate);
+					productToUpdate.setPrice(price);
+					productToUpdate.setAmount(amount);
+					productToUpdate.setCategoryId(categoryId);
+					productToUpdate.setManufacturerId(manufacturerId);
+					productToUpdate.setWarehouseId(warehouseId);
+
+					productDAOInit.update(productToUpdate);
+
+					for (Product product : products) {
+						System.out.println(product);
+					}
+					fillToProductTable(products);
 				}
 
 			}
@@ -282,22 +280,21 @@ public class View extends JFrame {
 		btnDelete.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO btnXoa
-				System.out.println("btnXoa");
 
 				// get text from ma hang hoa field
-				String maHangHoa = txtProductId.getText();
+				String fProductId = txtProductId.getText();
 
-				if (maHangHoa.equals("")) {
-					JOptionPane.showMessageDialog(null, "Vui long nhap ma hang hoa");
+				if (fProductId.equals("")) {
+					JOptionPane.showMessageDialog(null, "Please insert product id.");
 				} else {
-					// tim kiem hang hoa theo ma lay duoc trong list
-					// Product pFound = productDAOInit.find(maHangHoa);
+					int productId = Integer.parseInt(fProductId);
 
-					// productDAOInit.remove(pFound);
+					Product productToDelete = productDAOInit.findById(products, productId);
+
+					productDAOInit.delete(productToDelete);
 
 					// reload table
-					// fillToTable(productsInit);
+					fillToProductTable(products);
 				}
 			}
 		});
@@ -485,11 +482,11 @@ public class View extends JFrame {
 		getContentPane().add(splitPane);
 		splitPane.setRightComponent(pnlContent);
 
-		// tblProduct.addMouseListener(new MouseAdapter() {
-		// public void mouseClicked(MouseEvent evt) {
-		// tblKetXuatMouseClicked(evt);
-		// }
-		// });
+		tblProduct.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				tblProductMouseClicked(evt);
+			}
+		});
 	}
 
 	private void getCategories() {
@@ -603,33 +600,6 @@ public class View extends JFrame {
 		txtProductName.setText("");
 	}
 
-	// private void tblKetXuatMouseClicked(MouseEvent evt) {
-	//
-	// // get selected product
-	// int selectedRow = tblProduct.getSelectedRow();
-	// String code = (String) tblProduct.getValueAt(selectedRow, 0);
-	//
-	// // Tim product by code on click
-	// Product p = productDAOInit.find(productsInit, code);
-	//
-	// System.out.println(p);
-	// // Fill product to form
-	// filProductToForm(p);
-	// }
-
-	// private void filProductToForm(Product p) {
-	// txtProductId.setText(p.getCode().trim());
-	// txtPrice.setText(p.getPrice().trim());
-	// txtExpiryDate.setText(p.getExpiryDate().trim());
-	// txtAmount.setText(p.getTonKho().trim());
-	// txtProductName.setText(p.getName().trim());
-	//
-	// // TODO set 3 combobox
-	// cboWarehouse.setSelectedIndex(Integer.parseInt(p.getKho()) - 1);
-	// cboManufacturer.setSelectedIndex(Integer.parseInt(p.getHang()) - 1);
-	// cboCategory.setSelectedIndex(Integer.parseInt(p.getPhanloai()) - 1);
-	// }
-
 	private void addItem(JPanel p, JComponent c, int x, int y, int width, int height, int align) {
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.gridx = x;
@@ -657,14 +627,38 @@ public class View extends JFrame {
 		}
 	}
 
-	private void tblWarehouseMouseClicked(MouseEvent evt) {
-		System.out.println(evt);
+	private void filProductToForm(Product p) {
+		txtProductId.setText(String.valueOf(p.getId()));
+		txtProductName.setText(p.getName().trim());
+		txtPrice.setText(String.valueOf(p.getPrice()));
+		txtExpiryDate.setText(p.getExpiryDate().toString());
+		txtAmount.setText(String.valueOf(p.getAmount()));
 
+		System.out.println(p);
+		// TODO set 3 combobox
+		cboCategory.setSelectedIndex(p.getCategoryId() - 1);
+		cboManufacturer.setSelectedIndex(p.getManufacturerId() - 1);
+		cboWarehouse.setSelectedIndex(p.getWarehouseId() - 1);
+	}
+
+	private void tblWarehouseMouseClicked(MouseEvent evt) {
 		int selectedRow = tblWarehouse.getSelectedRow();
 		System.out.println("In warehouse table, selected row: " + selectedRow);
 
 		selectedWarehouse = selectedRow + 1;
 		System.out.println("In warehouse table, selected warehouse id: " + selectedWarehouse);
 		fillToProductTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
+	}
+	
+	private void tblProductMouseClicked(MouseEvent evt) {
+		int selectedRow = tblProduct.getSelectedRow();
+		System.out.println("In product table, selected row: " + selectedRow);
+		
+		int productId = selectedRow + 1;
+		System.out.println("In product table, selected product id: " + productId);
+
+		Product p = productDAOInit.findById(products, productId);
+
+		filProductToForm(p);
 	}
 }

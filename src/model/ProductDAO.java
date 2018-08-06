@@ -48,30 +48,31 @@ public class ProductDAO extends DAO<Product> {
 
 	@Override
 	public List<Product> getAll() throws SQLException {
-//		List<Product> products = new ArrayList<>();
-//		try {
-//			Statement s = CONN.createStatement();
-//			ResultSet r = s.executeQuery(SELECT_ALL);
-//			while (r.next()) {
-//				int id = r.getInt("ID");
-//				String name = r.getString("NAME");
-//				int price = r.getInt("PRICE");
-//				Date expiryDate = r.getDate("EXPIRY_DATE");
-//				int amount = r.getInt("AMOUNT");
-//				int categoryId = r.getInt("CATEGORY_ID");
-//				int manufacturerId = r.getInt("MANUFACTURER_ID");
-//				int warehouseId = r.getInt("WAREHOUSE_ID");
-//				Product product = new Product(id, name, price, expiryDate, amount, categoryId, manufacturerId,
-//						warehouseId);
-//				products.add(product);
-//			}
-//			r.close();
-//			s.close();
-//		} catch (SQLException e) {
-//			System.out.println("Can't get data in PRODUCT.");
-//		}
-//		return products;
-		
+		// List<Product> products = new ArrayList<>();
+		// try {
+		// Statement s = CONN.createStatement();
+		// ResultSet r = s.executeQuery(SELECT_ALL);
+		// while (r.next()) {
+		// int id = r.getInt("ID");
+		// String name = r.getString("NAME");
+		// int price = r.getInt("PRICE");
+		// Date expiryDate = r.getDate("EXPIRY_DATE");
+		// int amount = r.getInt("AMOUNT");
+		// int categoryId = r.getInt("CATEGORY_ID");
+		// int manufacturerId = r.getInt("MANUFACTURER_ID");
+		// int warehouseId = r.getInt("WAREHOUSE_ID");
+		// Product product = new Product(id, name, price, expiryDate, amount,
+		// categoryId, manufacturerId,
+		// warehouseId);
+		// products.add(product);
+		// }
+		// r.close();
+		// s.close();
+		// } catch (SQLException e) {
+		// System.out.println("Can't get data in PRODUCT.");
+		// }
+		// return products;
+
 		return this.data();
 	}
 
@@ -96,9 +97,9 @@ public class ProductDAO extends DAO<Product> {
 	public List<Product> findBy(List<Product> products, String code) {
 		List<Product> searched = new ArrayList<>();
 		for (Product p : products) {
-//			if (code.equals(p.getCode().trim()) || code.equals(p.getName())) {
-//				searched.add(p);
-//			}
+			// if (code.equals(p.getCode().trim()) || code.equals(p.getName())) {
+			// searched.add(p);
+			// }
 		}
 		return searched;
 	}
@@ -111,7 +112,7 @@ public class ProductDAO extends DAO<Product> {
 				filtered.add(p);
 			}
 		}
-		
+
 		return filtered;
 	}
 
@@ -128,7 +129,7 @@ public class ProductDAO extends DAO<Product> {
 		products.add(new Product(9, "p9", 200, new Date(), 50, 4, 1, 1));
 		products.add(new Product(10, "p10", 200, new Date(), 50, 4, 1, 1));
 		products.add(new Product(11, "p11", 200, new Date(), 50, 5, 1, 1));
-		
+
 		return products;
 	}
 
@@ -152,5 +153,12 @@ public class ProductDAO extends DAO<Product> {
 		return null;
 	}
 
-	
+	public void update(Product productToUpdate) {
+		// TODO: update product
+	}
+
+	public void delete(Product productToDelete) {
+		// TODO: delete product
+	}
+
 }
