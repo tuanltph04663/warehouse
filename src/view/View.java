@@ -63,7 +63,7 @@ public class View extends JFrame {
 	private static final String BUTTON_SAVE = "Save";
 
 	private static final String LABEL_PRICE = "Price";
-	private static final String LABEL_EXPIRY_DATE = "Expiry date (DD-MM-YYYY)";
+	private static final String LABEL_EXPIRY_DATE = "Expiry date (YYYY-MM-DD)";
 	private static final String LABEL_MANUFACTURER = "Manufacturer";
 	private static final String LABEL_WAREHOUSE = "Warehouse";
 	private static final String LABEL_PRODUCT_ID = "Product ID";
