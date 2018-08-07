@@ -333,6 +333,9 @@ public class View extends JFrame {
 				Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
 			}
 
+			// reload database
+			getProducts();
+			
 			// reload table
 			fillProductsToTable(products);
 
