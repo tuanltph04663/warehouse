@@ -16,16 +16,23 @@ public class Convert {
 		}
 		return d;
 	}
-	
+
+	public static String dateToString(Date date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+		String d = sdf.format(date);
+		return d;
+	}
+
 	public static void main(String[] args) {
 		Date date = Convert.stringToDate("02-03-2015");
-		System.out.println(date.getDate());
-		System.out.println(date.getMonth());
-		System.out.println(date.getYear());
+		Date d1 = new Date();
+		
+		String d = dateToString(d1);
+		
+		System.out.println(d);
 	}
-	
-	
-	public static java.sql.Date utilDateToSqlDate(Date d){
+
+	public static java.sql.Date utilDateToSqlDate(Date d) {
 		java.sql.Date dateConverted = new java.sql.Date(d.getTime());
 		return dateConverted;
 	}

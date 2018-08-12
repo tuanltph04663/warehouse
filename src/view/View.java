@@ -28,6 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
 import com.aspose.cells.Workbook;
@@ -52,25 +53,25 @@ public class View extends JFrame {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final String APPLICATION_TITLE = "Warehouse management";
+	private static final String APPLICATION_TITLE = "Quản Lý Kho Hàng";
 
-	private static final String BUTTON_SKIP = "Skip";
-	private static final String BUTTON_EXPORT = "Export";
-	private static final String BUTTON_EDIT = "Edit";
-	private static final String BUTTON_ADD = "Add";
-	private static final String BUTTON_SEARCH = "Search";
-	private static final String BUTTON_DELETE = "Delete";
-	private static final String BUTTON_SAVE = "Save";
+	private static final String BUTTON_SKIP = "Bỏ Qua";
+	private static final String BUTTON_EXPORT = "Kết Xuất";
+	private static final String BUTTON_EDIT = "Chỉnh Sửa";
+	private static final String BUTTON_ADD = "Thêm";
+	private static final String BUTTON_SEARCH = "Tìm Kiếm";
+	private static final String BUTTON_DELETE = "Xóa";
+	private static final String BUTTON_SAVE = "Lưu";
 
-	private static final String LABEL_PRICE = "Price";
-	private static final String LABEL_EXPIRY_DATE = "Expiry date (YYYY-MM-DD)";
-	private static final String LABEL_MANUFACTURER = "Manufacturer";
-	private static final String LABEL_WAREHOUSE = "Warehouse";
-	private static final String LABEL_PRODUCT_ID = "Product ID";
-	private static final String LABEL_CATEGORY = "Category";
-	private static final String LABEL_AMOUNT = "Amount";
-	private static final String LABEL_PRODUCT_NAME = "Product name";
-	private static final String LABEL_SEARCH = "Search";
+	private static final String LABEL_PRICE = "Giá";
+	private static final String LABEL_EXPIRY_DATE = "Hạn Sử Dụng (Ngày/Tháng/Năm)";
+	private static final String LABEL_MANUFACTURER = "Hãng Sản Xuất";
+	private static final String LABEL_WAREHOUSE = "Kho";
+	private static final String LABEL_PRODUCT_ID = "Mã Sản Phẩm";
+	private static final String LABEL_CATEGORY = "Phân Loại";
+	private static final String LABEL_AMOUNT = "Tồn Kho";
+	private static final String LABEL_PRODUCT_NAME = "Tên Sản Phẩm";
+	private static final String LABEL_SEARCH = "Tìm Kiếm";
 
 	// JPanel
 	private JPanel pnlLeft;
@@ -178,13 +179,16 @@ public class View extends JFrame {
 	private void leftPanel() {
 		pnlLeft = new JPanel();
 
-		String column[] = { "No.", "Warehouse" };
+		String column[] = { "STT.", "Tên Kho" };
 
 		// TODO: tblWarehouse data
 		String data[][] = warehouseDAOInit.getWarehouseData();
 
 		tblWarehouse = new JTable(new DefaultTableModel(data, column));
 		tblWarehouse.setRowSelectionInterval(0, 0);
+		tblWarehouse.setDefaultEditor(Object.class, null);
+		tblWarehouse.setRowSelectionAllowed(true);
+		tblWarehouse.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		JScrollPane spTonKho = new JScrollPane(tblWarehouse, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -541,6 +545,9 @@ public class View extends JFrame {
 
 		tblProduct = new JTable(new DefaultTableModel(data, column));
 		tblProduct.setSize(600, 300);
+		tblProduct.setDefaultEditor(Object.class, null);
+		tblProduct.setRowSelectionAllowed(true);
+		tblProduct.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		JScrollPane spKetXuat = new JScrollPane(tblProduct, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -666,17 +673,23 @@ public class View extends JFrame {
 		DefaultTableModel model = (DefaultTableModel) tblProduct.getModel();
 		model.setRowCount(0);
 		for (Product p : list) {
-			Object[] row = new Object[] { p.getId(), p.getName(), p.getExpiryDate(), p.getAmount() };
+			System.out.println(p.getExpiryDate());
+			String date = Convert.dateToString(p.getExpiryDate());
+			Object[] row = new Object[] { p.getId(), p.getName(), date, p.getAmount() };
 			model.addRow(row);
 		}
 
 	}
 
 	private void filProductToForm(Product p) {
+		// convert date format
+		String date = Convert.dateToString(p.getExpiryDate());
+		
+		
 		txtProductId.setText(String.valueOf(p.getId()));
 		txtProductName.setText(p.getName().trim());
 		txtPrice.setText(String.valueOf(p.getPrice()));
-		txtExpiryDate.setText(p.getExpiryDate().toString());
+		txtExpiryDate.setText(date);
 		txtAmount.setText(String.valueOf(p.getAmount()));
 
 		// TODO set 3 combobox
