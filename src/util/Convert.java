@@ -23,17 +23,16 @@ public class Convert {
 		return d;
 	}
 
-	public static void main(String[] args) {
-		Date date = Convert.stringToDate("02-03-2015");
-		Date d1 = new Date();
-		
-		String d = dateToString(d1);
-		
-		System.out.println(d);
-	}
-
 	public static java.sql.Date utilDateToSqlDate(Date d) {
 		java.sql.Date dateConverted = new java.sql.Date(d.getTime());
 		return dateConverted;
 	}
+
+	public static void main(String[] args) {
+		Date dateInput = stringToDate("12-03-2018");
+		Date date = new Date(); // 15-08-2018
+
+		System.out.println(date);
+	}
+
 }

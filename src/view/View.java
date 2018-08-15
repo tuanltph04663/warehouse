@@ -44,6 +44,7 @@ import model.entity.Manufacturer;
 import model.entity.Product;
 import model.entity.ProductToExport;
 import model.entity.Warehouse;
+import util.CompareDate;
 import util.Convert;
 
 public class View extends JFrame {
@@ -64,7 +65,7 @@ public class View extends JFrame {
 	private static final String BUTTON_SAVE = "Lưu";
 
 	private static final String LABEL_PRICE = "Giá";
-	private static final String LABEL_EXPIRY_DATE = "Hạn Sử Dụng (Ngày/Tháng/Năm)";
+	private static final String LABEL_EXPIRY_DATE = "Hạn Sử Dụng (Ngày-Tháng-Năm)";
 	private static final String LABEL_MANUFACTURER = "Hãng Sản Xuất";
 	private static final String LABEL_WAREHOUSE = "Kho";
 	private static final String LABEL_PRODUCT_ID = "Mã Sản Phẩm";
@@ -164,11 +165,11 @@ public class View extends JFrame {
 		contentPanel();
 		add(pnlContent, BorderLayout.CENTER);
 
-		// disable form
-		toggleForm(false);
-
 		// application status
 		applicationStatus = Status.DEFAULT;
+
+		// disable form
+		toggleForm(false);
 
 		// Start program: default warehouse selected = 1;
 		fillProductsToTable(productDAOInit.filterProductByWarehouse(products, selectedWarehouse));
@@ -241,6 +242,7 @@ public class View extends JFrame {
 				// change status
 				applicationStatus = Status.DEFAULT;
 
+				toggleButton(false);
 				toggleForm(false);
 			}
 		});
@@ -253,6 +255,8 @@ public class View extends JFrame {
 
 				// enable form
 				toggleForm(true);
+
+				toggleButton(true);
 
 				// disable product id
 				txtProductId.setEnabled(false);
@@ -267,24 +271,33 @@ public class View extends JFrame {
 				String fProductId = txtProductId.getText();
 
 				if (fProductId.equals("")) {
-					JOptionPane.showMessageDialog(null, "Please select product to delete.");
+					JOptionPane.showMessageDialog(null, "Vui lòng chọn sản phẩm muốn xóa.");
 				} else {
 					int productId = Integer.parseInt(fProductId);
 
 					Product productToDelete = productDAOInit.findById(products, productId);
 
-					boolean isDeleted = productDAOInit.delete(productToDelete);
+					int confirm = JOptionPane.showConfirmDialog(null, "Bạn chắc chắn muốn xóa?", "Thông báo",
+							JOptionPane.YES_NO_OPTION);
 
-					if (isDeleted) {
-						JOptionPane.showMessageDialog(null, "Deleted!", "Notification", 1);
+					System.out.println(confirm);
+					// yes: confirn == 0
+					// no: confirm == 1
 
-						// reload database
-						getProducts();
+					if (confirm == 0) {
+						boolean isDeleted = productDAOInit.delete(productToDelete);
 
-						// reload table
-						fillProductsToTable(products);
-					} else {
-						JOptionPane.showMessageDialog(null, "Delete fail!", "Notification", 1);
+						if (isDeleted) {
+							JOptionPane.showMessageDialog(null, "Đã xóa!", "Notification", 1);
+
+							// reload database
+							getProducts();
+
+							// reload table
+							fillProductsToTable(products);
+						} else {
+							JOptionPane.showMessageDialog(null, "Xóa không thành công!", "Notification", 1);
+						}
 					}
 
 				}
@@ -300,6 +313,8 @@ public class View extends JFrame {
 				// enable form
 				toggleForm(true);
 
+				toggleButton(true);
+
 				// clear form
 				clearForm();
 			}
@@ -313,6 +328,10 @@ public class View extends JFrame {
 				} else if (applicationStatus == Status.EDITING) {
 					updateProduct();
 				}
+
+				applicationStatus = Status.DEFAULT;
+				toggleForm(false);
+				toggleButton(false);
 			}
 		});
 
@@ -323,7 +342,14 @@ public class View extends JFrame {
 		Product productToSave = formToProduct();
 		System.out.println("In btnSave, productToSave: " + productToSave);
 
-		// TODO: save confirm
+		// validation date
+		Date dateToCompare = productToSave.getExpiryDate();
+		Date now = new Date();
+
+		if (!CompareDate.commpareDate(Convert.dateToString(dateToCompare), Convert.dateToString(now))) {
+			JOptionPane.showMessageDialog(null, "Ngày nhập vào không hợp lệ.", "Thông báo", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
 
 		// insert product
 		boolean isInserted = productDAOInit.insert(productToSave);
@@ -339,14 +365,14 @@ public class View extends JFrame {
 
 			// reload database
 			getProducts();
-			
+
 			// reload table
 			fillProductsToTable(products);
 
 			// show dialog
-			JOptionPane.showMessageDialog(null, "Insert successfully!");
+			JOptionPane.showMessageDialog(null, "Thêm thành công!");
 		} else {
-			JOptionPane.showMessageDialog(null, "Insert fail!");
+			JOptionPane.showMessageDialog(null, "Thêm không thành công!");
 		}
 	}
 
@@ -387,6 +413,16 @@ public class View extends JFrame {
 			productToUpdate.setCategoryId(categoryId);
 			productToUpdate.setManufacturerId(manufacturerId);
 			productToUpdate.setWarehouseId(warehouseId);
+
+			// validation date
+			Date dateToCompare = productToUpdate.getExpiryDate();
+			Date now = new Date();
+
+			if (!CompareDate.commpareDate(Convert.dateToString(dateToCompare), Convert.dateToString(now))) {
+				JOptionPane.showMessageDialog(null, "Ngày nhập vào không hợp lệ.", "Thông báo",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 
 			boolean isUpdated = productDAOInit.update(productToUpdate);
 			if (isUpdated) {
@@ -633,8 +669,23 @@ public class View extends JFrame {
 		return p;
 	}
 
-	private void toggleForm(boolean isEnable) {
+	/**
+	 * Toggle buttons
+	 * 
+	 * if true, enable skip and save. Else enable add, delete, edit
+	 * 
+	 * @param isEnable
+	 */
+	private void toggleButton(boolean isEnable) {
+		btnSkip.setEnabled(isEnable);
 		btnSave.setEnabled(isEnable);
+
+		btnAdd.setEnabled(!isEnable);
+		btnDelete.setEnabled(!isEnable);
+		btnEdit.setEnabled(!isEnable);
+	}
+
+	private void toggleForm(boolean isEnable) {
 		btnSkip.setEnabled(isEnable);
 		btnSave.setEnabled(isEnable);
 		txtPrice.setEnabled(isEnable);
@@ -684,8 +735,7 @@ public class View extends JFrame {
 	private void filProductToForm(Product p) {
 		// convert date format
 		String date = Convert.dateToString(p.getExpiryDate());
-		
-		
+
 		txtProductId.setText(String.valueOf(p.getId()));
 		txtProductName.setText(p.getName().trim());
 		txtPrice.setText(String.valueOf(p.getPrice()));
@@ -729,15 +779,15 @@ public class View extends JFrame {
 
 		filProductToForm(p);
 	}
-	
-	private List<ProductToExport> productsToExport(){
+
+	private List<ProductToExport> productsToExport() {
 		List<ProductToExport> productsToExport = new ArrayList<>();
-		
+
 		for (Product p : products) {
 			String categoryName = categoryDAOInit.findById(categories, p.getCategoryId()).getName();
 			String manufacturerName = manufacturerDAOInit.findById(manufacturers, p.getManufacturerId()).getName();
 			String warehouseName = warehouseDAOInit.findById(warehouses, p.getWarehouseId()).getName();
-			
+
 			ProductToExport pToExport = new ProductToExport();
 			pToExport.setId(p.getId());
 			pToExport.setName(p.getName());
@@ -747,10 +797,10 @@ public class View extends JFrame {
 			pToExport.setCategory(categoryName);
 			pToExport.setManufacturer(manufacturerName);
 			pToExport.setWarehouse(warehouseName);
-			
+
 			productsToExport.add(pToExport);
 		}
-		
+
 		return productsToExport;
 	}
 
@@ -782,7 +832,6 @@ public class View extends JFrame {
 		designer.setDataSource("Title", excelTitle);
 		designer.setDataSource("Product", productsToExport());
 
-		
 		try {
 			// Process
 			designer.process();
@@ -791,7 +840,7 @@ public class View extends JFrame {
 
 			// Save the workbook
 			wb.save("test.xlsx");
-			
+
 			JOptionPane.showMessageDialog(null, "Export successfully!");
 		} catch (Exception e) {
 			e.printStackTrace();
